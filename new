@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Semi-Classical Dance — Animated Stage</title>
+  <style>
+    /* Basic page */
+    :root{
+      --bg:#081226;
+      --stage:#0b2540;
+      --accent:#f9d78a;
+      --soft:#ffdca6;
+      --light:rgba(255,230,160,0.08);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Arial;color:#fff;background:linear-gradient(180deg,var(--bg) 0%, #071122 100%);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:1100px;margin:18px auto;padding:18px}
+
+    /* Stage area */
+    .stage {
+      position:relative;
+      height:520px;
+      border-radius:12px;
+      overflow:hidden;
+      background:
+        radial-gradient(ellipse at 50% 20%, rgba(255,240,200,0.06) 0%, transparent 30%),
+        linear-gradient(180deg,#071428 0%, #041022 100%);
+      box-shadow: 0 20px 60px rgba(2,6,23,0.6);
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+
+    /* Floor */
+    .floor {
+      position:absolute;left:0;right:0;bottom:0;height:120px;
+      background:linear-gradient(180deg,#0a243a 0%, #052033 100%);
+      transform:skewY(-2deg);
+      box-shadow: inset 0 10px 40px rgba(0,0,0,0.6);
+    }
+
+    /* Spotlight beams */
+    .beam {
+      position:absolute;
+      bottom:90px;
+      width:220px;
+      height:420px;
+      left:50%;
+      transform:translateX(-50%) rotate(-6deg);
+      background:linear-gradient(180deg, rgba(255,240,180,0.14) 0%, rgba(255,240,180,0.02) 50%, transparent 70%);
+      filter: blur(12px);
+      mix-blend-mode:screen;
+      animation: beamWiggle 6s ease-in-out infinite;
+      border-radius:20%;
+      pointer-events:none;
+    }
+    .beam.left{left:20%;transform:translateX(-50%) rotate(-8deg);animation-delay:-1.3s}
+    .beam.right{left:80%;transform:translateX(-50%) rotate(8deg);animation-delay:-0.5s}
+    @keyframes beamWiggle{0%,100%{opacity:0.95;transform:translateX(-50%) rotate(-8deg)}50%{opacity:0.7;transform:translateX(-52%) rotate(-12deg)}}
+
+    /* Soft ambient lights (top) */
+    .lights{position:absolute;top:8px;left:0;right:0;height:80px;pointer-events:none}
+    .lights .dot{width:12px;height:12px;border-radius:50%;background:var(--soft);opacity:0.2;display:inline-block;margin:0 10px;animation: blink 3s infinite;}
+    @keyframes blink{0%{opacity:0.08}50%{opacity:0.35}100%{opacity:0.08}}
+
+    /* Particles (dust) */
+    .particles{position:absolute;inset:0;pointer-events:none}
+    .particle{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--soft);opacity:0.05;filter:blur(2px);animation:float 8s linear infinite}
+    @keyframes float{0%{transform:translateY(0) translateX(0)}100%{transform:translateY(-420px) translateX(60px)}}
+
+    /* SVG dancer container */
+    .dancers {
+      position:absolute;
+      left:50%;
+      bottom:64px;
+      transform:translateX(-50%);
+      display:flex;
+      gap:80px;
+      align-items:flex-end;
+      justify-content:center;
+      width:100%;
+      pointer-events:none;
+    }
+
+    /* dancer group sizing */
+    .dancer {
+      width:220px;
+      height:360px;
+      transform-origin:50% 100%;
+      pointer-events:none;
+    }
+
+    /* animation: gentle sway for whole dancer */
+    .dancer { animation: sway 4.2s ease-in-out infinite; }
+    .dancer.left{animation-delay:0s}
+    .dancer.right{animation-delay:-1.2s;transform:scaleX(-1) translateY(6px)}
+
+    @keyframes sway{
+      0%{transform:translateY(0) rotateZ(-2deg)}
+      50%{transform:translateY(-6px) rotateZ(2deg)}
+      100%{transform:translateY(0) rotateZ(-2deg)}
+    }
+
+    /* arms and skirt animations target via classes in SVG */
+    /* arms: rotate back and forth */
+    .arm-left, .arm-right {
+      transform-origin:20% 20%;
+      animation: armMove 1.6s ease-in-out infinite;
+    }
+    .arm-right{animation-delay:0.22s}
+    @keyframes armMove{
+      0%{transform:rotate(-12deg)}
+      50%{transform:rotate(14deg)}
+      100%{transform:rotate(-12deg)}
+    }
+
+    /* leg foot tap */
+    .leg-left, .leg-right {
+      transform-origin:50% 90%;
+      animation: legTap 1.2s steps(2,end) infinite;
+    }
+    @keyframes legTap{
+      0%{transform:translateY(0)}
+      50%{transform:translateY(4px)}
+      100%{transform:translateY(0)}
+    }
+
+    /* skirt flare */
+    .skirt {
+      transform-origin:50% 20%;
+      animation: skirtFlow 1.6s ease-in-out infinite;
+    }
+    @keyframes skirtFlow{
+      0%{transform:scaleX(1) rotateZ(0)}
+      50%{transform:scaleX(1.04) rotateZ(1.6deg)}
+      100%{transform:scaleX(1) rotateZ(0)}
+    }
+
+    /* shadow under dancers */
+    .shadow {
+      position:absolute;left:50%;transform:translateX(-50%);bottom:36px;width:480px;height:46px;border-radius:50%;background:radial-gradient(ellipse at center, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.05) 60%);filter:blur(10px);pointer-events:none
+    }
+
+    /* controls and info */
+    .controls {
+      position:absolute;top:14px;left:18px;display:flex;gap:8px;align-items:center;background:rgba(0,0,0,0.22);padding:8px;border-radius:10px
+    }
+    .controls button, .controls input[type=range]{
+      background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--soft);padding:6px 8px;border-radius:8px
+    }
+    .caption {
+      position:absolute;bottom:16px;left:24px;font-size:13px;color:rgba(255,245,200,0.85)
+    }
+
+    /* small responsive adjustments */
+    @media(max-width:720px){
+      .dancer{width:150px;height:260px}
+      .dancers{gap:36px}
+      .beam{display:none}
+      .stage{height:420px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2 style="margin:6px 0 12px;font-weight:600">Semi-Classical Dance — Animated Stage</h2>
+
+    <div class="stage" role="img" aria-label="Animated dance stage">
+      <!-- decorative lights -->
+      <div class="lights" aria-hidden="true" style="text-align:center;">
+        <span class="dot" style="margin-left:calc(50% - 60px)"></span>
+        <span class="dot" style="margin-left:18px;animation-delay:.2s"></span>
+        <span class="dot" style="animation-delay:.5s"></span>
+        <span class="dot" style="animation-delay:1s"></span>
+      </div>
+
+      <!-- central beam and side beams -->
+      <div class="beam left"></div>
+      <div class="beam"></div>
+      <div class="beam right"></div>
+
+      <!-- floating particles -->
+      <div class="particles" aria-hidden="true">
+        <!-- JS will create a few for subtle effect -->
+      </div>
+
+      <!-- dancers container -->
+      <div class="dancers" aria-hidden="false">
+        <!-- LEFT dancer (female-ish silhouette with skirt sway) -->
+        <svg class="dancer left" viewBox="0 0 220 360" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <!-- body -->
+          <g transform="translate(20,8)">
+            <ellipse cx="88" cy="44" rx="20" ry="24" fill="#ffdebb" /> <!-- head -->
+            <rect x="74" y="66" width="28" height="64" rx="8" ry="8" fill="#c8743a" /> <!-- torso -->
+            <!-- arms -->
+            <g class="arm-left" transform="translate(64,72)">
+              <rect x="-6" y="0" width="10" height="58" rx="6" ry="6" fill="#ffdebb" transform="rotate(-12)"/>
+            </g>
+            <g class="arm-right" transform="translate(120,72)">
+              <rect x="-4" y="0" width="10" height="58" rx="6" ry="6" fill="#ffdebb" transform="rotate(6)"/>
+            </g>
+
+            <!-- skirt (animated) -->
+            <g class="skirt" transform="translate(48,116)">
+              <path d="M10,6 C36,70 118,70 144,6 L72,120 Z" fill="#d04a2a" />
+              <path d="M18,14 C66,76 110,76 132,14 L72,110 Z" fill="#f0a86b" opacity="0.5"/>
+            </g>
+
+            <!-- legs -->
+            <g transform="translate(72,196)">
+              <rect class="leg-left" x="-6" y="0" width="12" height="64" rx="6" fill="#ffdebb"/>
+              <rect class="leg-right" x="20" y="0" width="12" height="64" rx="6" fill="#ffdebb"/>
+            </g>
+
+            <!-- ornaments / bindi -->
+            <circle cx="88" cy="44" r="2" fill="#a62b2b" />
+          </g>
+        </svg>
+
+        <!-- RIGHT dancer (male-ish silhouette with graceful pose) -->
+        <svg class="dancer right" viewBox="0 0 220 360" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <g transform="translate(20,8)">
+            <ellipse cx="88" cy="44" rx="20" ry="24" fill="#f6ddb9" /> <!-- head -->
+            <rect x="70" y="66" width="36" height="72" rx="8" ry="8" fill="#335b8a" /> <!-- torso -->
+            <!-- arms -->
+            <g class="arm-left" transform="translate(60,78)">
+              <rect x="-6" y="0" width="10" height="68" rx="6" ry="6" fill="#f6ddb9" transform="rotate(-18)"/>
+            </g>
+            <g class="arm-right" transform="translate(136,72)">
+              <rect x="-4" y="0" width="10" height="58" rx="6" ry="6" fill="#f6ddb9" transform="rotate(8)"/>
+            </g>
+
+            <!-- lower drape (subtle) -->
+            <g class="skirt" transform="translate(56,146)">
+              <path d="M12,6 C40,70 120,70 148,6 L80,120 Z" fill="#2b5f86" />
+            </g>
+
+            <!-- legs -->
+            <g transform="translate(76,220)">
+              <rect class="leg-left" x="-6" y="0" width="12" height="64" rx="6" fill="#f6ddb9"/>
+              <rect class="leg-right" x="20" y="0" width="12" height="64" rx="6" fill="#f6ddb9"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- soft shadow under dancers -->
+      <div class="shadow" aria-hidden="true"></div>
+
+      <!-- stage floor strip -->
+      <div class="floor" aria-hidden="true"></div>
+
+      <!-- small on-stage controls -->
+      <div class="controls" role="region" aria-label="playback controls" style="left:18px;top:18px;">
+        <button id="playBtn" aria-live="polite">Play</button>
+        <button id="pauseBtn">Pause</button>
+        <label style="font-size:12px;margin-left:6px">Vol</label>
+        <input id="vol" type="range" min="0" max="1" step="0.01" value="0.9" />
+      </div>
+
+      <div class="caption">A subtle semi-classical choreography — gentle arm/leg motion, skirt flow, and stage lights.</div>
+
+      <!-- hidden audio (replace src with your track) -->
+      <audio id="music" preload="auto">
+        <source src="your-music.mp3" type="audio/mpeg">
+        <!-- fallback: browser will show controls if no source -->
+      </audio>
+    </div>
+  </div>
+
+  <script>
+    // create subtle particles
+    const particles = document.querySelector('.particles');
+    const count = 14;
+    for(let i=0;i<count;i++){
+      const p = document.createElement('div');
+      p.className='particle';
+      p.style.left = Math.random()*100 + '%';
+      p.style.bottom = Math.random()*60 + 'px';
+      p.style.opacity = (0.03 + Math.random()*0.06).toFixed(2);
+      p.style.width = (4 + Math.random()*8) + 'px';
+      p.style.height = p.style.width;
+      p.style.animationDuration = (6 + Math.random()*8) + 's';
+      p.style.animationDelay = (Math.random()*-8) + 's';
+      particles.appendChild(p);
+    }
+
+    // audio controls
+    const music = document.getElementById('music');
+    const playBtn = document.getElementById('playBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const vol = document.getElementById('vol');
+
+    playBtn.addEventListener('click', ()=>{
+      // try to play; browsers may block autoplay without user gesture
+      music.volume = vol.value;
+      music.play().catch(()=>{ alert('Browser blocked autoplay — click Play again or interact with page.'); });
+    });
+    pauseBtn.addEventListener('click', ()=> music.pause());
+    vol.addEventListener('input', ()=> music.volume = vol.value);
+
+    // small timed choreography accent: occasional flourish (scale + faster arm)
+    const dancers = document.querySelectorAll('.dancer');
+    setInterval(()=>{
+      dancers.forEach((d,i)=>{
+        d.style.transition = 'transform 260ms ease';
+        d.style.transform = d.classList.contains('right') ? 'scaleX(-1) translateY(-4px) rotateZ(2deg)' : 'translateY(-4px) rotateZ(-2deg)';
+        setTimeout(()=> d.style.transform = '', 260);
+      });
+      // briefly speed up arm animation by toggling a class
+      document.querySelectorAll('.arm-left, .arm-right').forEach(a=>{
+        a.style.animationDuration = '0.9s';
+        setTimeout(()=> a.style.animationDuration = '', 260);
+      });
+    }, 7000);
+
+    // accessibility hint: expose play/pause via keyboard
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === ' '){ // space toggles
+        e.preventDefault();
+        if(music.paused) music.play(); else music.pause();
+      }
+      if(e.key === 'p') music.play();
+      if(e.key === 'o') music.pause();
+    });
+  </script>
+</body>
+</html>
